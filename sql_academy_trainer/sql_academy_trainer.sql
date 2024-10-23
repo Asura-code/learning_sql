@@ -87,3 +87,11 @@ SELECT time_in FROM Trip
 JOIN Pass_in_trip ON Trip.id = Pass_in_trip.trip
 JOIN Passenger ON Passenger.id = Pass_in_trip.passenger
 WHERE Passenger.name = 'Steve Martin' and Trip.town_to = 'London'
+
+--16. Вывести отсортированный по количеству перелетов (по убыванию) и имени (по возрастанию) список пассажиров, совершивших хотя бы 1 полет.
+
+SELECT name, COUNT(*) as count FROM Passenger
+JOIN Pass_in_trip ON Pass_in_trip.passenger = Passenger.id
+GROUP BY name
+HAVING COUNT(*) >= 1
+ORDER BY count DESC, name 
