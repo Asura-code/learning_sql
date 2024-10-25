@@ -95,3 +95,72 @@ JOIN Pass_in_trip ON Pass_in_trip.passenger = Passenger.id
 GROUP BY name
 HAVING COUNT(*) >= 1
 ORDER BY count DESC, name 
+
+
+--17. Определить, сколько потратил в 2005 году каждый из членов семьи. В результирующей выборке не выводите тех членов семьи, которые ничего не потратили.
+
+SELECT member_name, status, SUM(amount*unit_price) as costs FROM FamilyMembers
+JOIN Payments ON FamilyMembers.member_id = Payments.family_member
+WHERE YEAR(Payments.date) = '2005'
+GROUP BY member_name, status
+
+--18. Выведите имя самого старшего человека. Если таких несколько, то выведите их всех.
+
+SELECT member_name FROM FamilyMembers
+WHERE birthday = (SELECT MIN(birthday) as birthday FROM FamilyMembers)
+
+--19. Определить, кто из членов семьи покупал картошку (potato)
+
+SELECT status FROM FamilyMembers
+JOIN Payments ON FamilyMembers.member_id = Payments.family_member
+JOIN Goods ON Payments.good = Goods.good_id
+WHERE Goods.good_name = 'potato'
+GROUP BY member_id
+
+--20. Сколько и кто из семьи потратил на развлечения (entertainment). Вывести статус в семье, имя, сумму
+
+SELECT status, member_name, SUM(amount*unit_price) as costs FROM FamilyMembers
+JOIN Payments ON FamilyMembers.member_id = Payments.family_member
+JOIN Goods ON Payments.good = Goods.good_id
+JOIN GoodTypes ON Goods.type = GoodTypes.good_type_id
+WHERE good_type_name = 'entertainment'
+GROUP BY member_id
+
+--21. Определить товары, которые покупали более 1 раза
+
+SELECT good_name FROM Goods
+JOIN Payments ON Goods.good_id = Payments.good
+GROUP BY good_name
+HAVING  COUNT(good) > 1
+
+--22. Найти имена всех матерей (mother)
+
+SELECT member_name FROM FamilyMembers
+WHERE status = 'mother'
+
+--23. Найдите самый дорогой деликатес (delicacies) и выведите его цену
+
+SELECT good_name, unit_price FROM Payments
+JOIN Goods ON Payments.good = Goods.good_id
+JOIN GoodTypes ON Goods.type = GoodTypes.good_type_id
+WHERE good_type_name = 'delicacies'
+GROUP BY good_name, unit_price
+HAVING unit_price = (
+    SELECT MAX(unit_price) as unit_price FROM Payments
+    JOIN Goods ON Payments.good = Goods.good_id
+    JOIN GoodTypes ON Goods.type = GoodTypes.good_type_id
+    WHERE good_type_name = 'delicacies'
+)
+
+--24. Определить кто и сколько потратил в июне 2005
+
+SELECT member_name, SUM(amount*unit_price) as costs FROM FamilyMembers
+JOIN Payments ON FamilyMembers.member_id = Payments.family_member
+WHERE date BETWEEN '2005-06-01T00:00:00.000Z' AND '2005-07-01T00:00:00.000Z'
+GROUP BY member_name
+
+--25. Определить, какие товары не покупались в 2005 году
+
+SELECT good_name FROM Goods
+WHERE good_id NOT IN (SELECT good FROM Payments
+WHERE YEAR(date)='2005')
