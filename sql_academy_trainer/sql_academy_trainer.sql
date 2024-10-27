@@ -240,3 +240,39 @@ SELECT MIN(TIMESTAMPDIFF(YEAR,birthday,CURRENT_DATE)) as year FROM Student
 
 SELECT COUNT(*) as count FROM Student
 WHERE first_name = 'Anna'
+
+--39. Сколько обучающихся в 10 B классе ?
+
+SELECT COUNT(*) AS count FROM Student_in_class
+JOIN Class ON Student_in_class.class = Class.id
+WHERE Class.name REGEXP '10 B'
+
+--40. Выведите название предметов, которые преподает Ромашкин П.П. (Romashkin P.P.). Обратите внимание, что в базе данных есть несколько учителей с такими фамилией и инициалами.
+
+SELECT name as subjects FROM Subject
+JOIN Schedule ON Schedule.subject = Subject.id
+JOIN Teacher ON Teacher.id = Schedule.teacher
+WHERE Teacher.last_name REGEXP 'Romashkin' AND middle_name LIKE 'P%' AND first_name LIKE 'P%'
+
+--41. Выясните, во сколько по расписанию начинается четвёртое занятие.
+
+SELECT start_pair FROM Timepair
+WHERE id = 4
+
+--42. Сколько времени обучающийся будет находиться в школе, учась со 2-го по 4-ый уч. предмет?
+
+SELECT DISTINCT TIMEDIFF(
+(SELECT end_pair FROM Timepair
+WHERE id = 4),
+(SELECT start_pair FROM Timepair
+WHERE id = 2)
+) as time FROM Timepair
+
+--43. Выведите фамилии преподавателей, которые ведут физическую культуру (Physical Culture). Отсортируйте преподавателей по фамилии в алфавитном порядке.
+
+SELECT last_name FROM Teacher
+JOIN Schedule ON Teacher.id = Schedule.teacher
+JOIN Subject ON Schedule.subject = Subject.id
+WHERE name REGEXP 'PHYSICAL CULTURE'
+ORDER BY last_name 
+
