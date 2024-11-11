@@ -276,3 +276,130 @@ JOIN Subject ON Schedule.subject = Subject.id
 WHERE name REGEXP 'PHYSICAL CULTURE'
 ORDER BY last_name 
 
+--114. Напишите запрос, который выведет имена пилотов, которые в качестве второго пилота (second_pilot_id) в августе 2023 года летали в New York ||| Тинькоф
+
+SELECT name FROM Pilots
+JOIN Flights ON pilot_id = second_pilot_id
+WHERE MONTH(flight_date) = '8' AND YEAR(flight_date) = '2023' AND destination = 'New York'
+
+--101. Выведи для каждого пользователя первое наименование, которое он заказал (первое по времени транзакции). ||| VK
+
+SELECT user_id, item FROM Transactions
+WHERE transaction_ts in (
+    SELECT MIN(transaction_ts) FROM Transactions
+    GROUP BY user_id
+)
+
+--44. Найдите максимальный возраст (количество лет) среди обучающихся 10 классов на сегодняшний день. Для получения текущих даты и времени используйте функцию NOW().
+
+SELECT MAX(TIMESTAMPDIFF(year, birthday, current_time)) as max_year FROM Student
+JOIN Student_in_class ON Student.id = Student_in_class.student
+JOIN Class ON Student_in_class.class = Class.id
+WHERE Class.name LIKE '10%'
+
+--45. Какие кабинеты чаще всего использовались для проведения занятий? Выведите те, которые использовались максимальное количество раз.
+
+WITH CTE AS (SELECT classroom, COUNT(classroom) as mx FROM Schedule
+GROUP BY classroom
+ORDER BY mx DESC 
+)
+
+SELECT classroom FROM CTE
+WHERE mx in (SELECT MAX(mx) FROM CTE)
+
+--46. В каких классах введет занятия преподаватель "Krauze" ?
+
+SELECT name FROM Class
+JOIN Schedule ON Class.id = Schedule.class 
+JOIN Teacher ON Schedule.teacher = Teacher.id 
+WHERE Teacher.last_name REGEXP 'Krauze'
+GROUP BY name
+
+--47. Сколько занятий провел Krauze 30 августа 2019 г.?
+
+SELECT COUNT(number_pair) as count FROM Schedule
+JOIN Teacher ON Schedule.teacher = Teacher.id 
+WHERE Teacher.last_name REGEXP 'Krauze' AND date = '2019-08-30'
+
+--48. Выведите заполненность классов в порядке убывания
+
+SELECT name, COUNT(student) as count FROM Class
+JOIN Student_in_class ON Class.id = Student_in_class.class
+GROUP BY name
+ORDER BY count DESC 
+
+--49. Какой процент обучающихся учится в "10 A" классе? Выведите ответ в диапазоне от 0 до 100 с округлением до четырёх знаков после запятой, например, 96.0201.
+
+SELECT COUNT(student)*100 / (SELECT COUNT(student) FROM Student_in_class) as percent FROM Student_in_class
+JOIN Class ON Student_in_class.class = Class.id
+WHERE Class.name REGEXP '10 A'
+
+--50. Какой процент обучающихся родился в 2000 году? Результат округлить до целого в меньшую сторону.
+
+SELECT FLOOR(COUNT(student)*100 / (SELECT COUNT(student) FROM Student_in_class)) AS percent FROM Student_in_class
+JOIN Student ON Student_in_class.student = Student.id 
+WHERE YEAR(Student.birthday) = '2000'
+
+--51. Добавьте товар с именем "Cheese" и типом "food" в список товаров (Goods).
+
+INSERT INTO Goods
+SET good_id = (SELECT COUNT(good_id) FROM Goods AS a)+1, 
+    good_name = 'Cheese',
+    type = (SELECT good_type_id FROM GoodTypes
+            WHERE good_type_name = 'food'
+            GROUP BY good_type_id)
+
+--52. Добавьте в список типов товаров (GoodTypes) новый тип "auto".
+INSERT INTO GoodTypes VALUES
+((SELECT COUNT(*) FROM GoodTypes AS A)+1, 'auto')
+
+--53. Измените имя "Andie Quincey" на новое "Andie Anthony".
+
+UPDATE FamilyMembers
+SET member_name = 'Andie Anthony'
+WHERE member_name = 'Andie Quincey'
+
+--54. Удалить всех членов семьи с фамилией "Quincey".
+
+DELETE FROM FamilyMembers
+WHERE member_name REGEXP 'Quincey'
+
+--55. Удалить компании, совершившие наименьшее количество рейсов.
+
+WITH CTE AS(
+SELECT company, COUNT(company) AS A FROM Trip
+GROUP BY company
+)
+
+
+DELETE FROM Company
+WHERE id in (
+    SELECT company FROM CTE
+    WHERE A IN (SELECT MIN(A) FROM CTE)
+    )
+
+--56. Удалить все перелеты, совершенные из Москвы (Moscow).
+
+DELETE FROM Trip
+WHERE town_from = 'Moscow'
+
+--57. Перенести расписание всех занятий на 30 мин. вперед.
+
+UPDATE Timepair
+SET start_pair = start_pair + INTERVAL 30 MINUTE,
+    end_pair = end_pair + INTERVAL 30 MINUTE
+
+--58. Добавить отзыв с рейтингом 5 на жилье, находящиеся по адресу "11218, Friel Place, New York", от имени "George Clooney"
+
+INSERT INTO Reviews
+SET id = (SELECT COUNT(*) FROM Reviews AS C)+1,
+    reservation_id = (SELECT R.id FROM Reservations AS R
+                      JOIN Users ON R.user_id = Users.id
+                      JOIN Rooms ON R.room_id = Rooms.id
+                      WHERE Users.name = 'George Clooney' AND Rooms.address = '11218, Friel Place, New York'),
+    rating = 5
+
+--59. Вывести пользователей,указавших Белорусский номер телефона ? Телефонный код Белоруссии +375.
+
+SELECT * FROM Users
+WHERE phone_number REGEXP '\\+375'
