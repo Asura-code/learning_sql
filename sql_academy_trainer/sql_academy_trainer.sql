@@ -403,3 +403,58 @@ SET id = (SELECT COUNT(*) FROM Reviews AS C)+1,
 
 SELECT * FROM Users
 WHERE phone_number REGEXP '\\+375'
+
+--60. Выведите идентификаторы преподавателей, которые хотя бы один раз за всё время преподавали в каждом из одиннадцатых классов.
+
+WITH CTE AS (
+SELECT teacher, name FROM Schedule
+JOIN Class ON Schedule.class = Class.id
+WHERE Class.name REGEXP '11'
+GROUP BY teacher, name)
+
+SELECT teacher FROM (SELECT COUNT(teacher) AS C, teacher FROM CTE
+GROUP BY teacher) AS T
+WHERE C = 2
+
+
+-- ИЛИ другой способ
+
+WITH CTE AS (
+SELECT teacher, name FROM Schedule
+JOIN Class ON Schedule.class = Class.id
+WHERE Class.name REGEXP '11'
+GROUP BY teacher, name)
+
+SELECT teacher FROM (SELECT COUNT(teacher) AS C, teacher FROM CTE
+GROUP BY teacher) AS T
+WHERE C = 2
+
+--93. Какой средний возраст клиентов, купивших Smartwatch (использовать наименование товара product.name) в 2024 году? Альфа
+
+WITH CTX AS (
+SELECT age, Customer.customer_key FROM Customer
+JOIN Purchase ON Customer.customer_key = Purchase.customer_key
+JOIN Product ON Purchase.product_key = Product.product_key
+WHERE YEAR(Purchase.date) = '2024' AND Product.name = 'Smartwatch'
+)
+
+SELECT AVG(age) AS average_age FROM (SELECT DISTINCT customer_key, age FROM CTX) AS C
+
+
+--94. Вывести имена покупателей, каждый из которых приобрёл Laptop и Monitor (использовать наименование товара product.name) в марте 2024 года? Альфа
+
+SELECT name FROM (
+    SELECT name, COUNT(*) AS t FROM (
+        SELECT customer_key, name, p FROM (
+            SELECT Customer.name, Product.name as p, Customer.customer_key FROM Customer
+            JOIN Purchase ON Customer.customer_key = Purchase.customer_key
+            JOIN Product ON Purchase.product_key = Product.product_key
+            WHERE (Product.name = 'Laptop' OR Product.name = 'Monitor') AND YEAR(Purchase.date) = 2024 AND MONTH(Purchase.date) = 3) AS CTE
+        GROUP BY p, name, customer_key) AS CT
+    GROUP BY name) AS CTEX
+WHERE t = 2
+
+
+
+
+
